@@ -1,0 +1,8 @@
+<launch>
+	<arg name="bagname" default="2019-01-13-15-46-58"/>
+
+	<node pkg="rosbag_to_pcd" type="rosbag_to_pcd" name="rosbag_to_pcd" output="screen">
+		<param name="rosbag_path" type="string" value="$(env HOME)/rosbag/infant/dkan_outdoor/$(arg bagname).bag"/>
+		<param name="save_dir" type="string" value="$(find rosbag_to_pcd)/save/$(arg bagname)"/>
+	</node>
+</launch>

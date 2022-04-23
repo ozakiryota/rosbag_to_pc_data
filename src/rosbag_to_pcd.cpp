@@ -8,6 +8,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/passthrough.h>
 
 class rosbagToPcd{
 	private:
@@ -23,17 +24,30 @@ class rosbagToPcd{
 		/*parameter*/
 		std::string rosbag_path_;
 		std::string save_dir_;
+        bool sleep_for_debug_;
+        bool save_merged_pcd_;
+        double debug_hz_;
         bool remove_ground_;
         double m_per_cell_;
 		int grid_dim_;
 		double height_diff_threshold_;
+        bool filter_x_;
+        double x_min_;
+        double x_max_;
+        bool filter_y_;
+        double y_min_;
+        double y_max_;
+        bool filter_z_;
+        double z_min_;
+        double z_max_;
 
 	public:
 		rosbagToPcd();
         std::string getDefaultSaveDir();
         void convert();
         void removeGround(pcl::PointCloud<pcl::PointXYZI>::Ptr& pcl_pc);
-		void publication(sensor_msgs::PointCloud2 ros_pc, const pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc);
+        void filterXYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc);
+		void debugPublication(sensor_msgs::PointCloud2 ros_pc, const pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc);
         void outputInfo();
 };
 
@@ -52,6 +66,12 @@ rosbagToPcd::rosbagToPcd()
     nh_private_.param("save_dir", save_dir_, getDefaultSaveDir());
 	std::cout << "save_dir_ = " << save_dir_ << std::endl;
 
+    sleep_for_debug_ = nh_private_.getParam("debug_hz", debug_hz_);
+	std::cout << "debug_hz_ = " << debug_hz_ << std::endl;
+
+    nh_private_.param("save_merged_pcd", save_merged_pcd_, false);
+	std::cout << "save_merged_pcd_ = " << (bool)save_merged_pcd_ << std::endl;
+
     nh_private_.param("remove_ground", remove_ground_, false);
 	std::cout << "remove_ground_ = " << (bool)remove_ground_ << std::endl;
     nh_private_.param("m_per_cell", m_per_cell_, 1.0);
@@ -60,6 +80,19 @@ rosbagToPcd::rosbagToPcd()
 	std::cout << "grid_dim_ = " << grid_dim_ << std::endl;
 	nh_private_.param("height_diff_threshold", height_diff_threshold_, 0.1);
 	std::cout << "height_diff_threshold_ = " << height_diff_threshold_ << std::endl;
+
+    filter_x_ = nh_private_.getParam("x_min", x_min_);
+	std::cout << "x_min_ = " << x_min_ << std::endl;
+    if(filter_x_)   filter_x_ = nh_private_.getParam("x_max", x_max_);
+	std::cout << "x_max_ = " << x_max_ << std::endl;
+    filter_y_ = nh_private_.getParam("y_min", y_min_);
+	std::cout << "y_min_ = " << y_min_ << std::endl;
+    if(filter_y_)   filter_y_ = nh_private_.getParam("y_max", y_max_);
+	std::cout << "y_max_ = " << y_max_ << std::endl;
+    filter_z_ = nh_private_.getParam("z_min", z_min_);
+	std::cout << "z_min_ = " << z_min_ << std::endl;
+    if(filter_z_)   filter_z_ = nh_private_.getParam("z_max", z_max_);
+	std::cout << "z_max_ = " << z_max_ << std::endl;
 
     /*publisher*/
 	pub_original_ = nh_.advertise<sensor_msgs::PointCloud2>("/debug/original", 1);
@@ -98,24 +131,56 @@ void rosbagToPcd::convert()
     view.addQuery(bag, rosbag::TypeQuery("sensor_msgs/PointCloud2"));
     view_itr = view.begin();
 
+    pcl::PointCloud<pcl::PointXYZI>::Ptr merged_pc (new pcl::PointCloud<pcl::PointXYZI>);
+
+    ros::Rate loop_rate(debug_hz_);
     while(view_itr != view.end()){
         sensor_msgs::PointCloud2ConstPtr ros_pc = view_itr->instantiate<sensor_msgs::PointCloud2>();
         pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc (new pcl::PointCloud<pcl::PointXYZI>);
         pcl::fromROSMsg(*ros_pc, *pcl_pc);
+        if(filter_x_ || filter_y_ || filter_z_) filterXYZ(pcl_pc);
         if(remove_ground_)  removeGround(pcl_pc);
         if(!pcl_pc->points.empty()){
             std::stringstream save_path;
-            save_path << save_dir_ << "/" << ros_pc->header.stamp;
+            save_path << save_dir_ << "/" << ros_pc->header.stamp << ".pcd";
             pcl::io::savePCDFileASCII(save_path.str(), *pcl_pc);
             std::cout << "Save: " << save_path.str() << std::endl;
-            std::cout << "ros_pc->header.stamp.sec = " << ros_pc->header.stamp.sec << std::endl;
-            std::cout << "ros_pc->header.stamp.nsec = " << ros_pc->header.stamp.nsec << std::endl;
-            std::cout << "pcl_pc->points.size() = " << pcl_pc->points.size() << std::endl;
             ++num_save_;
+            if(save_merged_pcd_)    *merged_pc += *pcl_pc;
         }
         ++view_itr;
         ++num_msg_;
-        publication(*ros_pc, pcl_pc);
+        debugPublication(*ros_pc, pcl_pc);
+        if(sleep_for_debug_)    loop_rate.sleep();
+    }
+
+    if(save_merged_pcd_){
+        std::string save_merged_pcd_path = save_dir_ + "/merged.pcd";
+        pcl::io::savePCDFileASCII(save_merged_pcd_path, *merged_pc);
+        std::cout << "Save: " << save_merged_pcd_path << std::endl;
+    }
+}
+
+void rosbagToPcd::filterXYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc)
+{
+    pcl::PassThrough<pcl::PointXYZI> pt;
+    if(filter_x_){
+        pt.setInputCloud(pcl_pc);
+        pt.setFilterFieldName("x");
+        pt.setFilterLimits(x_min_, x_max_);
+        pt.filter(*pcl_pc);
+    }
+    if(filter_y_){
+        pt.setInputCloud(pcl_pc);
+        pt.setFilterFieldName("y");
+        pt.setFilterLimits(y_min_, y_max_);
+        pt.filter(*pcl_pc);
+    }
+    if(filter_z_){
+        pt.setInputCloud(pcl_pc);
+        pt.setFilterFieldName("z");
+        pt.setFilterLimits(z_min_, z_max_);
+        pt.filter(*pcl_pc);
     }
 }
 
@@ -130,7 +195,6 @@ void rosbagToPcd::removeGround(pcl::PointCloud<pcl::PointXYZI>::Ptr& pcl_pc)
     bool init[grid_dim_][grid_dim_];
     memset(&init, 0, grid_dim_*grid_dim_);
 
-    /*build height map*/
     for(size_t i = 0; i < pcl_pc->points.size(); ++i){
         int x = ((grid_dim_ / 2) + pcl_pc->points[i].x / m_per_cell_);
         int y = ((grid_dim_ / 2) + pcl_pc->points[i].y / m_per_cell_);
@@ -147,7 +211,6 @@ void rosbagToPcd::removeGround(pcl::PointCloud<pcl::PointXYZI>::Ptr& pcl_pc)
         }
     }
 
-    /*display points where map has height-difference > threshold*/
     for(size_t i = 0; i < pcl_pc->points.size(); ++i){
         int x = (grid_dim_ / 2) + pcl_pc->points[i].x / m_per_cell_;
         int y = (grid_dim_ / 2) + pcl_pc->points[i].y / m_per_cell_;
@@ -165,7 +228,7 @@ void rosbagToPcd::removeGround(pcl::PointCloud<pcl::PointXYZI>::Ptr& pcl_pc)
     pcl_pc = tmp_obstacle_pc;
 }
 
-void rosbagToPcd::publication(sensor_msgs::PointCloud2 original_ros_pc, const pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_pcl_pc)
+void rosbagToPcd::debugPublication(sensor_msgs::PointCloud2 original_ros_pc, const pcl::PointCloud<pcl::PointXYZI>::Ptr filtered_pcl_pc)
 {
     const std::string debug_frame = "debug";
 

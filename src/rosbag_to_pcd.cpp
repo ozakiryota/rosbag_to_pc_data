@@ -8,6 +8,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/common/transforms.h>
 #include <pcl/filters/passthrough.h>
 
 class rosbagToPcd{
@@ -27,6 +28,12 @@ class rosbagToPcd{
         bool sleep_for_debug_;
         bool save_merged_pcd_;
         double debug_hz_;
+        double pre_rot_r_deg_;
+        double pre_rot_p_deg_;
+        double pre_rot_y_deg_;
+        double post_rot_r_deg_;
+        double post_rot_p_deg_;
+        double post_rot_y_deg_;
         bool remove_ground_;
         double m_per_cell_;
 		int grid_dim_;
@@ -45,6 +52,8 @@ class rosbagToPcd{
 		rosbagToPcd();
         std::string getDefaultSaveDir();
         void convert();
+        void rotation(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc, float r_deg, float p_deg, float y_deg);
+        float degToRad(double deg);
         void removeGround(pcl::PointCloud<pcl::PointXYZI>::Ptr& pcl_pc);
         void filterXYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc);
 		void debugPublication(sensor_msgs::PointCloud2 ros_pc, const pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc);
@@ -68,6 +77,19 @@ rosbagToPcd::rosbagToPcd()
 
     sleep_for_debug_ = nh_private_.getParam("debug_hz", debug_hz_);
 	std::cout << "debug_hz_ = " << debug_hz_ << std::endl;
+
+    nh_private_.param("pre_rot_r_deg", pre_rot_r_deg_, 0.0);
+	std::cout << "pre_rot_r_deg_ = " << pre_rot_r_deg_ << std::endl;
+    nh_private_.param("pre_rot_p_deg", pre_rot_p_deg_, 0.0);
+	std::cout << "pre_rot_p_deg_ = " << pre_rot_p_deg_ << std::endl;
+    nh_private_.param("pre_rot_y_deg", pre_rot_y_deg_, 0.0);
+	std::cout << "pre_rot_y_deg_ = " << pre_rot_y_deg_ << std::endl;
+    nh_private_.param("post_rot_r_deg", post_rot_r_deg_, 0.0);
+	std::cout << "post_rot_r_deg_ = " << post_rot_r_deg_ << std::endl;
+    nh_private_.param("post_rot_p_deg", post_rot_p_deg_, 0.0);
+	std::cout << "post_rot_p_deg_ = " << post_rot_p_deg_ << std::endl;
+    nh_private_.param("post_rot_y_deg", post_rot_y_deg_, 0.0);
+	std::cout << "post_rot_y_deg_ = " << post_rot_y_deg_ << std::endl;
 
     nh_private_.param("save_merged_pcd", save_merged_pcd_, false);
 	std::cout << "save_merged_pcd_ = " << (bool)save_merged_pcd_ << std::endl;
@@ -138,8 +160,12 @@ void rosbagToPcd::convert()
         sensor_msgs::PointCloud2ConstPtr ros_pc = view_itr->instantiate<sensor_msgs::PointCloud2>();
         pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc (new pcl::PointCloud<pcl::PointXYZI>);
         pcl::fromROSMsg(*ros_pc, *pcl_pc);
+
+        if(pre_rot_r_deg_ || pre_rot_p_deg_ || pre_rot_y_deg_)  rotation(pcl_pc, pre_rot_r_deg_, pre_rot_p_deg_, pre_rot_y_deg_);
         if(filter_x_ || filter_y_ || filter_z_) filterXYZ(pcl_pc);
         if(remove_ground_)  removeGround(pcl_pc);
+        if(post_rot_r_deg_ || post_rot_p_deg_ || post_rot_y_deg_)  rotation(pcl_pc, post_rot_r_deg_, post_rot_p_deg_, post_rot_y_deg_);
+
         if(!pcl_pc->points.empty()){
             std::stringstream save_path;
             save_path << save_dir_ << "/" << ros_pc->header.stamp << ".pcd";
@@ -150,6 +176,7 @@ void rosbagToPcd::convert()
         }
         ++view_itr;
         ++num_msg_;
+
         debugPublication(*ros_pc, pcl_pc);
         if(sleep_for_debug_)    loop_rate.sleep();
     }
@@ -159,6 +186,19 @@ void rosbagToPcd::convert()
         pcl::io::savePCDFileASCII(save_merged_pcd_path, *merged_pc);
         std::cout << "Save: " << save_merged_pcd_path << std::endl;
     }
+}
+
+void rosbagToPcd::rotation(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc, float r_deg, float p_deg, float y_deg)
+{
+    Eigen::Affine3f transformatoin = pcl::getTransformation(0.0, 0.0, 0.0, degToRad(r_deg), degToRad(p_deg), degToRad(y_deg));
+	pcl::transformPointCloud(*pcl_pc, *pcl_pc, transformatoin);
+}
+
+float rosbagToPcd::degToRad(double deg)
+{
+	double rad = deg / 180.0 * M_PI;
+	rad = atan2(sin(rad), cos(rad));
+	return rad;
 }
 
 void rosbagToPcd::filterXYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc)

@@ -26,14 +26,15 @@ RUN echo 'function cmk(){ \n\
 		cd $cpath \n\
 		OLDPWD=$lastpwd \n\
         }' >> ~/.bashrc
+########## Cache busting ##########
+ARG CACHEBUST=1
 ########## rosbag_to_pcd ##########
 RUN apt-get update && \
     apt-get install -y \
 		libpcl-dev  && \
-		# ros-noetic-pcl-conversions \
-	cd ~/catkin_ws/src
-	# git clone https://github.com/ozakiryota/rosbag_to_pcd.git && \
-	# cd ~/catkin_ws/ && \
-	# /bin/bash -c "source /opt/ros/noetic/setup.bash; catkin_make"
+	cd ~/catkin_ws/src && \
+	git clone https://github.com/ozakiryota/rosbag_to_pcd.git && \
+	cd ~/catkin_ws && \
+	/bin/bash -c "source /opt/ros/noetic/setup.bash; catkin_make"
 ########## Initial position ##########
 WORKDIR /root/catkin_ws/src/rosbag_to_pcd

@@ -1,4 +1,5 @@
 <launch>
+	<arg name="bagdir" default="$(env HOME)/rosbag/airsim/car_1cam_lidar32"/>
 	<arg name="bagname" default="2022-04-23-14-38-09"/>
 
 	<!-- rviz -->
@@ -6,7 +7,7 @@
 
 	<!-- main -->
 	<node pkg="rosbag_to_pcd" type="rosbag_to_pcd" name="rosbag_to_pcd" output="screen">
-		<param name="rosbag_path" type="string" value="$(env HOME)/rosbag/airsim/car_1cam_lidar32/$(arg bagname).bag"/>
+		<param name="rosbag_path" type="string" value="$(arg bagdir)/$(arg bagname).bag"/>
 		<param name="save_dir" type="string" value="$(find rosbag_to_pcd)/save/$(arg bagname)"/>
 		<param name="save_merged_pcd" type="bool" value="true"/>
 		<param name="debug_hz" type="double" value="200.0"/>

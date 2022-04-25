@@ -1,6 +1,6 @@
 #!/bin/bash
 
-image="rosbag_to_pcd"
+image="rosbag_to_pc_files"
 tag="latest"
 
 docker build . \

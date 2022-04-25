@@ -31,7 +31,8 @@ ARG CACHEBUST=1
 ########## rosbag_to_pcd ##########
 RUN apt-get update && \
     apt-get install -y \
-		libpcl-dev  && \
+		libpcl-dev \
+		ros-noetic-pcl-conversions && \
 	cd ~/catkin_ws/src && \
 	git clone https://github.com/ozakiryota/rosbag_to_pcd.git && \
 	cd ~/catkin_ws && \

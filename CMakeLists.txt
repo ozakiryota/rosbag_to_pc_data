@@ -32,7 +32,7 @@ include_directories(
 
 add_executable(rosbag_to_pcd
     src/rosbag_to_pcd.cpp
-    src/rosbag_to_pc_files.cpp
+    src/load_rosbag.cpp
 )
 target_link_libraries(rosbag_to_pcd
     ${catkin_LIBRARIES}
@@ -41,7 +41,7 @@ target_link_libraries(rosbag_to_pcd
 
 add_executable(rosbag_to_ply
     src/rosbag_to_ply.cpp
-    src/rosbag_to_pc_files.cpp
+    src/load_rosbag.cpp
 )
 target_link_libraries(rosbag_to_ply
     ${catkin_LIBRARIES}

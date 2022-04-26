@@ -32,7 +32,8 @@ ARG CACHEBUST=1
 RUN apt-get update && \
     apt-get install -y \
 		libpcl-dev \
-		ros-noetic-pcl-conversions && \
+		ros-noetic-pcl-conversions \
+		ros-noetic-rviz && \
 	cd ~/catkin_ws/src && \
 	git clone https://github.com/ozakiryota/rosbag_to_pc_files.git && \
 	cd ~/catkin_ws && \

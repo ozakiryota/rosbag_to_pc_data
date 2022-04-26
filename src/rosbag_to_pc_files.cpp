@@ -120,7 +120,7 @@ void rosbagToPcFiles::convert()
         if(sleep_for_debug_)    loop_rate.sleep();
     }
 
-    if(save_merged_pcd_){
+    if(save_merged_pcd_ && !merged_pc->points.empty()){
         std::string save_merged_pcd_name = save_dir_ + "/merged";
         save(save_merged_pcd_name, merged_pc);
     }

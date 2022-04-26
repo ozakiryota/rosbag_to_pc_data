@@ -2,7 +2,7 @@
 
 xhost +
 
-image="rosbag_to_pc_files"
+image="rosbag_to_pc_data"
 tag="latest"
 
 docker run \

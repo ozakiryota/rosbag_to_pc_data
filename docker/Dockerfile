@@ -28,15 +28,15 @@ RUN echo 'function cmk(){ \n\
         }' >> ~/.bashrc
 ########## Cache busting ##########
 ARG CACHEBUST=1
-########## rosbag_to_pc_files ##########
+########## rosbag_to_pc_data ##########
 RUN apt-get update && \
     apt-get install -y \
 		libpcl-dev \
 		ros-noetic-pcl-conversions \
 		ros-noetic-rviz && \
 	cd ~/catkin_ws/src && \
-	git clone https://github.com/ozakiryota/rosbag_to_pc_files.git && \
+	git clone https://github.com/ozakiryota/rosbag_to_pc_data.git && \
 	cd ~/catkin_ws && \
 	/bin/bash -c "source /opt/ros/noetic/setup.bash; catkin_make"
 ########## Initial position ##########
-WORKDIR /root/catkin_ws/src/rosbag_to_pc_files
+WORKDIR /root/catkin_ws/src/rosbag_to_pc_data

@@ -3,7 +3,7 @@
 rosbagToPcFiles::rosbagToPcFiles()
 	: nh_private_("~")
 {
-	std::cout << "----- rosbag_to_pc_files -----" << std::endl;
+	std::cout << "----- rosbag_to_pc_data -----" << std::endl;
 
 	/*parameter*/
     if(!nh_private_.getParam("rosbag_path", rosbag_path_)){
@@ -69,7 +69,7 @@ std::string rosbagToPcFiles::getDefaultSaveDir()
         std::cerr << "Cannot get $ROS_WORKSPACE." << std::endl;
         exit(true);
     }
-    save_dir_ += std::string("/src/rosbag_to_pc_files/save/") + rosbag_path_;
+    save_dir_ += std::string("/src/rosbag_to_pc_data/save/") + rosbag_path_;
     return save_path;
 }
 

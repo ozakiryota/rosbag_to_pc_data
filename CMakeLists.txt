@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(rosbag_to_pc_files)
+project(rosbag_to_pc_data)
 
 add_compile_options(-std=c++17 -O2 -g -Wall)
 

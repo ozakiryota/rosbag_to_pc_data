@@ -213,7 +213,7 @@ void rosbagToPcFiles::debugPublication(sensor_msgs::PointCloud2 original_ros_pc,
     original_ros_pc.header.frame_id = debug_frame;
     pub_original_.publish(original_ros_pc);
 
-    if(!filtered_pcl_pc->points.empty() && remove_ground_){
+    if(!filtered_pcl_pc->points.empty()){
         sensor_msgs::PointCloud2 filtered_ros_pc;
         pcl::toROSMsg(*filtered_pcl_pc, filtered_ros_pc);
         filtered_ros_pc.header.frame_id = debug_frame;

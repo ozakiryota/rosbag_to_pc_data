@@ -44,17 +44,23 @@ rosbagToPcFiles::rosbagToPcFiles()
 	std::cout << "height_diff_threshold_ = " << height_diff_threshold_ << std::endl;
 
     filter_x_ = nh_private_.getParam("x_min", x_min_);
-	std::cout << "x_min_ = " << x_min_ << std::endl;
-    if(filter_x_)   filter_x_ = nh_private_.getParam("x_max", x_max_);
-	std::cout << "x_max_ = " << x_max_ << std::endl;
+    if(filter_x_){
+    	std::cout << "x_min_ = " << x_min_ << std::endl;
+        filter_x_ = nh_private_.getParam("x_max", x_max_);
+	    std::cout << "x_max_ = " << x_max_ << std::endl;
+    }
     filter_y_ = nh_private_.getParam("y_min", y_min_);
-	std::cout << "y_min_ = " << y_min_ << std::endl;
-    if(filter_y_)   filter_y_ = nh_private_.getParam("y_max", y_max_);
-	std::cout << "y_max_ = " << y_max_ << std::endl;
+    if(filter_y_){
+	    std::cout << "y_min_ = " << y_min_ << std::endl;
+        filter_y_ = nh_private_.getParam("y_max", y_max_);
+	    std::cout << "y_max_ = " << y_max_ << std::endl;
+    }
     filter_z_ = nh_private_.getParam("z_min", z_min_);
-	std::cout << "z_min_ = " << z_min_ << std::endl;
-    if(filter_z_)   filter_z_ = nh_private_.getParam("z_max", z_max_);
-	std::cout << "z_max_ = " << z_max_ << std::endl;
+    if(filter_z_){
+    	std::cout << "z_min_ = " << z_min_ << std::endl;
+        filter_z_ = nh_private_.getParam("z_max", z_max_);
+    	std::cout << "z_max_ = " << z_max_ << std::endl;
+    }
 
     /*publisher*/
 	pub_original_ = nh_.advertise<sensor_msgs::PointCloud2>("/debug/original", 1);

@@ -1,6 +1,6 @@
 #include <pcl/io/ply_io.h>
 
-#include "load_rosbag.h"
+#include "rosbag_to_pc_data.h"
 
 class rosbagToPly : public rosbagToPcFiles
 {

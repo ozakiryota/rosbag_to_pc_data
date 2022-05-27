@@ -1,4 +1,4 @@
-#include "load_rosbag.h"
+#include "rosbag_to_pc_data.h"
 
 class rosbagToPcd : public rosbagToPcFiles
 {

@@ -11,8 +11,8 @@
 		<param name="save_dir" type="string" value="$(find rosbag_to_pc_data)/save/$(arg bagname)"/>
 		<param name="save_merged_pcd" type="bool" value="true"/>
 		<param name="debug_hz" type="double" value="200.0"/>
-		<param name="pre_rot_y_deg" type="double" value="90.0"/>
-		<param name="post_rot_y_deg" type="double" value="-90.0"/>
+		<param name="rot_y_deg" type="double" value="90.0"/>
+		<param name="apply_reverse_rotation" type="bool" value="true"/>
 		<param name="remove_ground" type="bool" value="true"/>
 		<param name="grid_dim" type="int" value="100"/>
 		<param name="x_min" type="double" value="-20.0"/>

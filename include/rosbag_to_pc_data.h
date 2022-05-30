@@ -30,12 +30,10 @@ class rosbagToPcFiles{
         bool sleep_for_debug_;
         bool save_merged_pcd_;
         double debug_hz_;
-        double pre_rot_r_deg_;
-        double pre_rot_p_deg_;
-        double pre_rot_y_deg_;
-        double post_rot_r_deg_;
-        double post_rot_p_deg_;
-        double post_rot_y_deg_;
+        double rot_r_deg_;
+        double rot_p_deg_;
+        double rot_y_deg_;
+        bool apply_reverse_rotation_;
         bool remove_ground_;
         double m_per_cell_;
 		int grid_dim_;
@@ -54,7 +52,7 @@ class rosbagToPcFiles{
 		rosbagToPcFiles();
         std::string getDefaultSaveDir();
         void convert();
-        void rotation(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc, float r_deg, float p_deg, float y_deg);
+        void rotation(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc, float r_deg, float p_deg, float y_deg, bool inverse);
         float degToRad(double deg);
         void removeGround(pcl::PointCloud<pcl::PointXYZI>::Ptr& pcl_pc);
         void filterXYZ(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc);

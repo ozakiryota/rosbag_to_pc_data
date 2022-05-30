@@ -18,18 +18,14 @@ rosbagToPcFiles::rosbagToPcFiles()
     sleep_for_debug_ = nh_private_.getParam("debug_hz", debug_hz_);
 	std::cout << "debug_hz_ = " << debug_hz_ << std::endl;
 
-    nh_private_.param("pre_rot_r_deg", pre_rot_r_deg_, 0.0);
-	std::cout << "pre_rot_r_deg_ = " << pre_rot_r_deg_ << std::endl;
-    nh_private_.param("pre_rot_p_deg", pre_rot_p_deg_, 0.0);
-	std::cout << "pre_rot_p_deg_ = " << pre_rot_p_deg_ << std::endl;
-    nh_private_.param("pre_rot_y_deg", pre_rot_y_deg_, 0.0);
-	std::cout << "pre_rot_y_deg_ = " << pre_rot_y_deg_ << std::endl;
-    nh_private_.param("post_rot_r_deg", post_rot_r_deg_, 0.0);
-	std::cout << "post_rot_r_deg_ = " << post_rot_r_deg_ << std::endl;
-    nh_private_.param("post_rot_p_deg", post_rot_p_deg_, 0.0);
-	std::cout << "post_rot_p_deg_ = " << post_rot_p_deg_ << std::endl;
-    nh_private_.param("post_rot_y_deg", post_rot_y_deg_, 0.0);
-	std::cout << "post_rot_y_deg_ = " << post_rot_y_deg_ << std::endl;
+    nh_private_.param("rot_r_deg", rot_r_deg_, 0.0);
+	std::cout << "rot_r_deg_ = " << rot_r_deg_ << std::endl;
+    nh_private_.param("rot_p_deg", rot_p_deg_, 0.0);
+	std::cout << "rot_p_deg_ = " << rot_p_deg_ << std::endl;
+    nh_private_.param("rot_y_deg", rot_y_deg_, 0.0);
+	std::cout << "rot_y_deg_ = " << rot_y_deg_ << std::endl;
+    nh_private_.param("apply_reverse_rotation", apply_reverse_rotation_, false);
+	std::cout << "apply_reverse_rotation_ = " << (bool)apply_reverse_rotation_ << std::endl;
 
     nh_private_.param("save_merged_pcd", save_merged_pcd_, false);
 	std::cout << "save_merged_pcd_ = " << (bool)save_merged_pcd_ << std::endl;
@@ -107,10 +103,10 @@ void rosbagToPcFiles::convert()
         pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc (new pcl::PointCloud<pcl::PointXYZI>);
         pcl::fromROSMsg(*ros_pc, *pcl_pc);
 
-        if(pre_rot_r_deg_ || pre_rot_p_deg_ || pre_rot_y_deg_)  rotation(pcl_pc, pre_rot_r_deg_, pre_rot_p_deg_, pre_rot_y_deg_);
+        if(rot_r_deg_ || rot_p_deg_ || rot_y_deg_)  rotation(pcl_pc, rot_r_deg_, rot_p_deg_, rot_y_deg_, false);
         if(filter_x_ || filter_y_ || filter_z_) filterXYZ(pcl_pc);
         if(remove_ground_)  removeGround(pcl_pc);
-        if(post_rot_r_deg_ || post_rot_p_deg_ || post_rot_y_deg_)  rotation(pcl_pc, post_rot_r_deg_, post_rot_p_deg_, post_rot_y_deg_);
+        if(apply_reverse_rotation_)  rotation(pcl_pc, rot_r_deg_, rot_p_deg_, rot_y_deg_, true);
 
         if(!pcl_pc->points.empty()){
             std::stringstream save_name_ss;
@@ -132,9 +128,10 @@ void rosbagToPcFiles::convert()
     }
 }
 
-void rosbagToPcFiles::rotation(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc, float r_deg, float p_deg, float y_deg)
+void rosbagToPcFiles::rotation(pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc, float r_deg, float p_deg, float y_deg, bool inverse)
 {
     Eigen::Affine3f transformatoin = pcl::getTransformation(0.0, 0.0, 0.0, degToRad(r_deg), degToRad(p_deg), degToRad(y_deg));
+    if(inverse) transformatoin = transformatoin.inverse();
 	pcl::transformPointCloud(*pcl_pc, *pcl_pc, transformatoin);
 }
 
